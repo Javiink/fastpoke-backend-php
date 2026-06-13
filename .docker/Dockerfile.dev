@@ -1,34 +1,45 @@
-FROM php:8.4-cli
+FROM trafex/php-nginx:latest
 
-# Dependencies
-RUN apt-get update \
-    && apt-get install -y \
-        git \
-        libicu-dev \
-        libpq-dev \
-        libzip-dev \
-        unzip \
-        wget \
-        zip \
-        curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+USER root
 
-# PHP Extensions
-COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-RUN install-php-extensions \
-    bcmath \
-    gd \
-    intl \
-    pdo_pgsql \
-    zip
+# Dependencies & PHP Extensions
+RUN apk update && apk add --no-cache \
+    git \
+    icu-dev \
+    postgresql-dev \
+    libzip-dev \
+    unzip \
+    wget \
+    zip \
+    curl \
+    tar \
+    php-bcmath \
+    php-gd \
+    php-intl \
+    php-pdo_pgsql \
+    php-zip
 
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
-# Symfony CLI
-RUN wget https://get.symfony.com/cli/installer -O - | bash \
-    && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
+# Symfony CLI (He vuelto a poner la detección automática de arquitectura
+# para que no falle si compilas en un Mac con Apple Silicon / ARM64)
+RUN ARCH=$(uname -m) && \
+    case ${ARCH} in \
+        aarch64*|arm64) ARCH="arm64" ;; \
+        x86_64) ARCH="amd64" ;; \
+        *) echo "Arquitectura no soportada: ${ARCH}" && exit 1 ;; \
+    esac && \
+    wget -qO- "https://github.com/symfony-cli/symfony-cli/releases/latest/download/symfony-cli_linux_${ARCH}.tar.gz" \
+    | tar -xz -C /tmp \
+    && mv /tmp/symfony /usr/local/bin/symfony
+
+# 2. Crear el directorio de trabajo y dar permisos al usuario no-root
+# (Si lo crea root directamente, nobody no podrá escribir en él después)
+RUN mkdir -p /workspace && chown -R nobody:nobody /workspace
+
+# 3. Volver al usuario no-root (nobody) por seguridad
+USER nobody
 
 # Working directory
 WORKDIR /workspace

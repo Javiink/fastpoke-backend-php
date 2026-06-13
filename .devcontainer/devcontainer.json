@@ -4,6 +4,7 @@
     "service": "fastpoke-php-dev",
     "workspaceFolder": "/workspace",
     "shutdownAction": "stopCompose",
+    "remoteUser": "root",
     "customizations": {
         "vscode": {
             "extensions": [
