@@ -1,20 +1,21 @@
 {
-    "name": "FastPoke PHP Dev Container",
-    "dockerComposeFile": "compose.yml",
-    "service": "fastpoke-php-dev",
-    "workspaceFolder": "/workspace",
+    "name": "FastPoke API",
+    "dockerComposeFile": "../compose.yaml",
+    "service": "app",
+    "workspaceFolder": "/app",
     "shutdownAction": "stopCompose",
     "customizations": {
         "vscode": {
             "extensions": [
-                "EditorConfig.EditorConfig",
                 "bmewburn.vscode-intelephense-client",
-                "xdebug.php-debug"
+                "xdebug.php-debug",
+                "GitHub.copilot",
+                "GitHub.copilot-chat",
+                "eamodio.gitlens",
+                "EditorConfig.EditorConfig",
+                "mikestead.dotenv",
+                "ms-azuretools.vscode-docker"
             ]
         }
-    },
-    "forwardPorts": [
-        "fastpoke-php-dev:8000",
-        "mailer:8025"
-    ]
+    }
 }

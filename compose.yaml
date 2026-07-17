@@ -1,0 +1,61 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    container_name: fastpoke-app
+    working_dir: /app
+    volumes:
+      - .:/app:cached
+    ports:
+      - '8000:80'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+    tty: true
+
+  postgres:
+    image: postgres:17
+    container_name: fastpoke-postgres
+    restart: unless-stopped
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS:-app}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8
+    container_name: fastpoke-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: fastpoke-mailpit
+    restart: unless-stopped
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+
+volumes:
+  postgres-data:
