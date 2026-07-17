@@ -21,27 +21,6 @@ services:
       APP_ENV: ${APP_ENV:-dev}
     tty: true
 
-  postgres:
-    image: postgres:17
-    container_name: fastpoke-postgres
-    restart: unless-stopped
-    env_file:
-      - path: ./.env
-        required: false
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASS:-app}
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER']
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   redis:
     image: redis:8
     container_name: fastpoke-redis
@@ -56,6 +35,27 @@ services:
     ports:
       - '8025:8025'
       - '1025:1025'
+
+###> doctrine/doctrine-bundle ###
+  database:
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    container_name: fastpoke-postgres
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - ./docker/db/data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
 
 volumes:
   postgres-data:
